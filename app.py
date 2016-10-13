@@ -8,8 +8,10 @@ This file creates your application.
 
 import os
 from flask import Flask, render_template, request, redirect, url_for
+from flask_restful import Resource, Api
 
 app = Flask(__name__)
+api = Api(app)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
 
@@ -17,6 +19,13 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configur
 ###
 # Routing for your application.
 ###
+
+class HelloWorld(Resource):
+    def get(self):
+        return {'hello': 'world'}
+
+api.add_resource(HelloWorld, '/api')
+
 
 @app.route('/')
 def home():
