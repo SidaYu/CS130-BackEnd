@@ -3,6 +3,8 @@
 # ----------------------
 flask
 flask-restful
+psycopg2
+Flask-SQLAlchemy
 
 # ----------------------
 # Testing
