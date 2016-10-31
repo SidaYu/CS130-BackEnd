@@ -2,16 +2,19 @@
 # Flask
 # ----------------------
 flask
-
+flask-restful
+psycopg2
+Flask-SQLAlchemy
+bcrypt
 
 # ----------------------
 # Testing
 # ----------------------
-mock
+# mock
 
 
 # ----------------------
 # Production Server
 # ----------------------
-gevent
+# gevent
 gunicorn
