@@ -108,8 +108,8 @@ def about():
 def register():
     json_data = request.json
     user = User(
-        email=json_data['email'],
-        password=bcrypt.hashpw(json_data['password'].encode('utf-8'), bcrypt.gensalt())
+        email=json_data[u'email'],
+        password=bcrypt.hashpw(json_data[u'password'].encode('utf-8'), bcrypt.gensalt())
     )
     try:
         db.session.add(user)
