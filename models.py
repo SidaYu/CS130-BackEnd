@@ -1,30 +1,57 @@
 from flask_sqlalchemy import SQLAlchemy
-from app import app
+from app import db
 
-db = SQLAlchemy(app)
+# Todo: real model;
+# user register info.
+class User(db.Model):
+    __tablename__ = "user_info"
+    email = db.Column('email', db.String, primary_key=True)
+    password = db.Column('password', db.String)
+
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
 
 
-class Todo(db.Model):
-    __tablename__ = "todo"
+# job info.
+class Job(db.Model):
+    __tablename__ = "job_info"
     id = db.Column('id', db.Integer, primary_key=True)
-    category_id = db.Column('category_id', db.Integer, db.ForeignKey('category.id'))
-    priority_id = db.Column('priority_id', db.Integer, db.ForeignKey('priority.id'))
-    description = db.Column('description', db.Unicode)
-    creation_date = db.Column('creation_date', db.Date)
-    is_done = db.Column('is_done', db.Boolean)
+    user_email = db.Column('user_email', db.String)
+    company_name = db.Column("company_name", db.String)
+    company_depart = db.Column("company_depart", db.String)
+    position_title = db.Column("position_title", db.String)
+    app_URL = db.Column("app_URL", db.String)
 
-    priority = db.relationship('Priority', foreign_keys=priority_id)
-    category = db.relationship('Category', foreign_keys=category_id)
+    def __init__(self, user_email, company_name, company_depart, position_title, app_URL):
+        self.user_email = user_email
+        self.company_name = company_name
+        self.company_depart = company_depart
+        self.position_title = position_title
+        self.app_URL = app_URL
 
 
-class Priority(db.Model):
-    __tablename__ = "priority"
+class Job_Comment(db.Model):
+    __tablename__ = "job_comment"
     id = db.Column('id', db.Integer, primary_key=True)
-    name = db.Column('name', db.Unicode)
-    value = db.Column('value', db.Integer)
+    job_id = db.Column('job_id', db.Integer)
+    comment = db.Column('comment', db.Text)
+
+    def __init__(self, job_id, comment):
+        self.job_id = job_id
+        self.comment = comment
 
 
-class Category(db.Model):
-    __tablename__ = "category"
+class TimeStamp(db.Model):
+    __tablename__ = "time_stamps"
     id = db.Column('id', db.Integer, primary_key=True)
-    name = db.Column('name', db.Unicode)
+    job_id = db.Column("job_id", db.Integer)
+    description = db.Column('description', db.String)
+    deadline = db.Column('deadline', db.Date)
+    status = db.Column('status', db.Boolean)
+
+    def __init__(self, job_id, description, deadline, status):
+        self.job_id = job_id
+        self.description = description
+        self.deadline = deadline
+        self.status = status

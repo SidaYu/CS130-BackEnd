@@ -5,6 +5,7 @@ flask
 flask-restful
 psycopg2
 Flask-SQLAlchemy
+bcrypt
 
 # ----------------------
 # Testing
