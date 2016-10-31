@@ -6,12 +6,11 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
 
-import os, socket
+import os
 import bcrypt
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_restful import Resource, Api
 from flask_sqlalchemy import SQLAlchemy
-import models
 
 app = Flask(__name__)
 api = Api(app)
@@ -19,11 +18,67 @@ api = Api(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 
 db = SQLAlchemy(app)
+
+
+# Todo: real model;
+# user register info.
+class User(db.Model):
+    __tablename__ = "user_info"
+    email = db.Column('email', db.String, primary_key=True)
+    password = db.Column('password', db.String)
+
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
+
+
+# job info.
+class Job(db.Model):
+    __tablename__ = "job_info"
+    id = db.Column('id', db.Integer, primary_key=True)
+    user_email = db.Column('user_email', db.String)
+    company_name = db.Column("company_name", db.String)
+    company_depart = db.Column("company_depart", db.String)
+    position_title = db.Column("position_title", db.String)
+    app_URL = db.Column("app_URL", db.String)
+
+    def __init__(self, user_email, company_name, company_depart, position_title, app_URL):
+        self.user_email = user_email
+        self.company_name = company_name
+        self.company_depart = company_depart
+        self.position_title = position_title
+        self.app_URL = app_URL
+
+
+class Job_Comment(db.Model):
+    __tablename__ = "job_comment"
+    id = db.Column('id', db.Integer, primary_key=True)
+    job_id = db.Column('job_id', db.Integer)
+    comment = db.Column('comment', db.Text)
+
+    def __init__(self, job_id, comment):
+        self.job_id = job_id
+        self.comment = comment
+
+
+class TimeStamp(db.Model):
+    __tablename__ = "time_stamps"
+    id = db.Column('id', db.Integer, primary_key=True)
+    job_id = db.Column("job_id", db.Integer)
+    description = db.Column('description', db.String)
+    deadline = db.Column('deadline', db.Date)
+    status = db.Column('status', db.Boolean)
+
+    def __init__(self, job_id, description, deadline, status):
+        self.job_id = job_id
+        self.description = description
+        self.deadline = deadline
+        self.status = status
 
 
 ###
@@ -34,25 +89,13 @@ class HelloWorld(Resource):
         return {'hello': 'world'}
 
 
-class UserManagement(Resource):
-    # validate existd user
-    def get(self):
-        return {'email': 'test@ucla.edu',
-                'password': '123456'}
-
-    # add new users
-    def post(self):
-        pass
-
-
 api.add_resource(HelloWorld, '/api/test')
-api.add_resource(UserManagement, '/api/user')
 
 
 @app.route('/')
 def home():
     """Render website's home page."""
-    return render_template('home.html')
+    return render_template('/home.html')
 
 
 @app.route('/about/')
@@ -64,7 +107,7 @@ def about():
 @app.route('/api/register', methods=['POST'])
 def register():
     json_data = request.json
-    user = models.User(
+    user = User(
         email=json_data['email'],
         password=bcrypt.hashpw(json_data['password'].encode('utf-8'), bcrypt.gensalt())
     )
@@ -81,7 +124,7 @@ def register():
 @app.route('/api/login', methods=['POST'])
 def login():
     json_data = request.json
-    user = models.User.query.filter_by(email=json_data['email']).first()
+    user = User.query.filter_by(email=json_data['email']).first()
     if user and bcrypt.checkpw(
             json_data['password'].encode('utf-8'), user.password.encode('utf-8')):
         session['logged_in'] = True
@@ -100,7 +143,7 @@ def logout():
 @app.route('/api/addjob', methods=['POST'])
 def addjob():
     json_data = request.json
-    job = models.Job(
+    job = Job(
         user_email=json_data['user_email'],
         company_name=json_data['company_name'],
         company_depart=json_data['company_depart'],
@@ -120,7 +163,7 @@ def addjob():
 @app.route('/api/addComment', methods=['POST'])
 def addComment():
     json_data = request.json
-    jobComment = models.Job_Comment(
+    jobComment = Job_Comment(
         job_id=json_data['job_id'],
         comment=json_data['comment'],
     )
@@ -137,7 +180,7 @@ def addComment():
 @app.route('/api/addTimeStamp', methods=['POST'])
 def addTimeStamp():
     json_data = request.json
-    timeStamp = models.TimeStamp(
+    timeStamp = TimeStamp(
         job_id=json_data['job_id'],
         description=json_data['description'],
         deadline=json_data['deadline'],
@@ -161,7 +204,7 @@ def getAllJobs():
     res = {"user_email": user_email,
            "jobs": []}
     try:
-        for job in models.Job.query.filter_by(user_email=user_email).all():
+        for job in Job.query.filter_by(user_email=user_email).all():
             job_entry = {
                 "company_name": job.company_name,
                 "company_depart": job.company_depart,
@@ -169,7 +212,7 @@ def getAllJobs():
                 "time_stamps": [],
                 "comments": []
             }
-            for timestamp in models.TimeStamp.query.filter_by(job_id=job.id).all():
+            for timestamp in TimeStamp.query.filter_by(job_id=job.id).all():
                 timestamp_entry = {
                     "id": timestamp.id,
                     "description": timestamp.description,
@@ -177,7 +220,7 @@ def getAllJobs():
                     "status": timestamp.status
                 }
                 job_entry["time_stamps"].append(timestamp_entry)
-            for comment in models.Job_Comment.query.filter_by(job_id=job.id).all():
+            for comment in Job_Comment.query.filter_by(job_id=job.id).all():
                 comment_entry = {
                     "id": comment.id,
                     "comment": comment.comment
@@ -192,16 +235,6 @@ def getAllJobs():
         "status": status,
         "user_info": res
     })
-
-###
-# The functions below should be applicable to all Flask apps.
-###
-
-@app.route('/<file_name>.txt')
-def send_text_file(file_name):
-    """Send your static text file."""
-    file_dot_text = file_name + '.txt'
-    return app.send_static_file(file_dot_text)
 
 
 @app.after_request
