@@ -145,11 +145,11 @@ def logout():
 def addjob():
     json_data = request.json
     job = Job(
-        user_email=json_data[u'user_email'],
-        company_name=json_data[u'company_name'],
-        company_depart=json_data[u'company_depart'],
-        position_title=json_data[u'position_title'],
-        app_URL=json_data[u'app_URL']
+        user_email=json_data['user_email'],
+        company_name=json_data['company_name'],
+        company_depart=json_data['company_depart'],
+        position_title=json_data['position_title'],
+        app_URL=json_data['app_URL']
     )
     try:
         db.session.add(job)
