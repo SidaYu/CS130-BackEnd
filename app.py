@@ -200,7 +200,7 @@ def addTimeStamp():
 
 @app.route('/api/getAllJobs', methods=['GET'])
 def getAllJobs():
-    user_email = request.form['user_email']
+    user_email = request.args.get('user_email').encode('utf-8')
     res = {"user_email": user_email,
            "jobs": []}
     try:
