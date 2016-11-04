@@ -18,9 +18,9 @@ api = Api(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 
 db = SQLAlchemy(app)
 
@@ -107,9 +107,10 @@ def about():
 @app.route('/api/register', methods=['POST'])
 def register():
     json_data = request.json
+    print json_data
     user = User(
-        email=json_data['email'],
-        password=bcrypt.hashpw(json_data['password'].encode('utf-8'), bcrypt.gensalt())
+        email=json_data[u'email'],
+        password=bcrypt.hashpw(json_data[u'password'].encode('utf-8'), bcrypt.gensalt())
     )
     try:
         db.session.add(user)
@@ -199,8 +200,7 @@ def addTimeStamp():
 
 @app.route('/api/getAllJobs', methods=['GET'])
 def getAllJobs():
-    json_data = request.json
-    user_email = json_data['user_email']
+    user_email = request.args.get('user_email').encode('utf-8')
     res = {"user_email": user_email,
            "jobs": []}
     try:
@@ -208,6 +208,7 @@ def getAllJobs():
             job_entry = {
                 "company_name": job.company_name,
                 "company_depart": job.company_depart,
+                "position_title": job.position_title,
                 "app_URL": job.app_URL,
                 "time_stamps": [],
                 "comments": []
