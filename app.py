@@ -18,7 +18,7 @@ api = Api(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 
@@ -161,6 +161,38 @@ def addjob():
     return jsonify({'result': status})
 
 
+@app.route('/api/deleteJob', methods=['POST'])
+def deleteJob():
+    json_data = request.json
+    job_id = json_data['job_id']
+    try:
+        Job.query.filter_by(id=job_id).delete()
+        db.session.commit()
+        status = 'Delete job success. ID: %s .' % job_id
+    except:
+        status = 'Delete job failed. ID: %s .' % job_id
+    db.session.close()
+    return jsonify({'result': status})
+
+
+@app.route('/api/updateJob', methods=['POST'])
+def updateJob():
+    json_data = request.json
+    job_id = json_data['job_id']
+    updateItem = {}
+    for key, value in json_data.items():
+        if key != "job_id":
+            updateItem[key] = value
+    try:
+        Job.query.filter_by(id=job_id).update(dict(updateItem))
+        db.session.commit()
+        status = 'update job success. ID: %s .' % job_id
+    except:
+        status = 'update job failed. ID: %s .' % job_id
+    db.session.close()
+    return jsonify({'result': status})
+
+
 @app.route('/api/addComment', methods=['POST'])
 def addComment():
     json_data = request.json
@@ -174,6 +206,35 @@ def addComment():
         status = 'success'
     except:
         status = 'add job failed'
+    db.session.close()
+    return jsonify({'result': status})
+
+
+@app.route('/api/deleteComment', methods=['POST'])
+def deleteComment():
+    json_data = request.json
+    comment_id = json_data['comment_id']
+    try:
+        Job_Comment.query.filter_by(id=comment_id).delete()
+        db.session.commit()
+        status = 'Delete comment success. ID: %s .' % comment_id
+    except:
+        status = 'Delete comment failed. ID: %s .' % comment_id
+    db.session.close()
+    return jsonify({'result': status})
+
+
+@app.route('/api/updateComment', methods=['POST'])
+def updateComment():
+    json_data = request.json
+    comment_id = json_data['comment_id']
+    updateItem = {'comment' : json_data['comment']}
+    try:
+        Job.query.filter_by(id=comment_id).update(dict(updateItem))
+        db.session.commit()
+        status = 'update comment success. ID: %s .' % comment_id
+    except:
+        status = 'update comment failed. ID: %s .' % comment_id
     db.session.close()
     return jsonify({'result': status})
 
@@ -194,6 +255,38 @@ def addTimeStamp():
         status = 'success'
     except:
         status = 'add job failed'
+    db.session.close()
+    return jsonify({'result': status})
+
+
+@app.route('/api/deleteTimeStamp', methods=['POST'])
+def deleteTimeStamp():
+    json_data = request.json
+    timestamp_id = json_data['timestamp_id']
+    try:
+        TimeStamp.query.filter_by(id=timestamp_id).delete()
+        db.session.commit()
+        status = 'Delete timestamp success. ID: %s .' % timestamp_id
+    except:
+        status = 'Delete timestamp failed. ID: %s .' % timestamp_id
+    db.session.close()
+    return jsonify({'result': status})
+
+
+@app.route('/api/updateTimeStamp', methods=['POST'])
+def updateTimeStamp():
+    json_data = request.json
+    timestamp_id = json_data['timestamp_id']
+    updateItem = {}
+    for key, value in json_data.items():
+        if key != 'timestamp_id':
+            updateItem[key] = value
+    try:
+        Job.query.filter_by(id=timestamp_id).update(dict(updateItem))
+        db.session.commit()
+        status = 'update comment success. ID: %s .' % timestamp_id
+    except:
+        status = 'update comment failed. ID: %s .' % timestamp_id
     db.session.close()
     return jsonify({'result': status})
 
@@ -237,6 +330,53 @@ def getAllJobs():
         "user_info": res
     })
 
+@app.route('/api/getJobList', methods=['GET'])
+def getJobList():
+    user_email = request.args.get('user_email').encode('utf-8')
+    res = {"user_email": user_email,
+           "job_list": []}
+    try:
+        for job in Job.query.filter_by(user_email=user_email).all():
+            job_entry = {
+                "job_id" : job.id,
+                "company_name": job.company_name,
+                "company_depart": job.company_depart,
+                "position_title": job.position_title,
+                "app_URL": job.app_URL,
+            }
+            res["job_list"].append(job_entry)
+        status = 'success'
+    except:
+        status = 'query job failed'
+    db.session.close()
+    return jsonify({
+        "status": status,
+        "jobs": res
+    })
+
+
+@app.route('/api/getTimeStamps', methods=['GET'])
+def getTimeStamps():
+    job_id = request.args.get('job_id').encode('utf-8')
+    res = {"job_id": job_id,
+           "timeStamp_list": []}
+    try:
+        for timestamp in TimeStamp.query.filter_by(job_id=job_id).all():
+            timestamp_entry = {
+                "id": timestamp.id,
+                "description": timestamp.description,
+                "deadline": timestamp.deadline,
+                "status": timestamp.status
+            }
+        res["timeStamp_list"].append(timestamp_entry)
+        status = 'success'
+    except:
+        status = 'query job failed'
+    db.session.close()
+    return jsonify({
+        "status": status,
+        "timeStamps": res
+    })
 
 @app.after_request
 def add_header(response):
