@@ -18,9 +18,9 @@ api = Api(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 
 db = SQLAlchemy(app)
 
@@ -107,7 +107,6 @@ def about():
 @app.route('/api/register', methods=['POST'])
 def register():
     json_data = request.json
-    print json_data
     user = User(
         email=json_data[u'email'],
         password=bcrypt.hashpw(json_data[u'password'].encode('utf-8'), bcrypt.gensalt())
@@ -119,6 +118,27 @@ def register():
     except:
         status = 'this user is already registered'
     db.session.close()
+    return jsonify({'result': status})
+
+
+@app.route('/api/changePW', methods=['POST'])
+def changePW():
+    json_data = request.json
+    email=json_data[u'email']
+    user = User.query.filter_by(email=email).first()
+    newpassword = bcrypt.hashpw(json_data[u'newpassword'].encode('utf-8'), bcrypt.gensalt())
+    if user and bcrypt.checkpw(
+            json_data['oldpassword'].encode('utf-8'), user.password.encode('utf-8')):
+        try:
+            User.query.filter_by(email=email).update({"password": newpassword})
+            db.session.commit()
+            status = 'success'
+        except:
+            status = 'can not update the new password'
+        db.session.close()
+    else:
+        status = 'authentication failed'
+
     return jsonify({'result': status})
 
 
