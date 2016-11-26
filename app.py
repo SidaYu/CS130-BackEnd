@@ -230,7 +230,7 @@ def updateComment():
     comment_id = json_data['comment_id']
     updateItem = {'comment' : json_data['comment']}
     try:
-        Job.query.filter_by(id=comment_id).update(dict(updateItem))
+        Job_Comment.query.filter_by(id=comment_id).update(dict(updateItem))
         db.session.commit()
         status = 'update comment success. ID: %s .' % comment_id
     except:
@@ -284,9 +284,9 @@ def updateTimeStamp():
     try:
         TimeStamp.query.filter_by(id=timestamp_id).update(dict(updateItem))
         db.session.commit()
-        status = 'update comment success. ID: %s .' % timestamp_id
+        status = 'update TimeStamp success. ID: %s .' % timestamp_id
     except:
-        status = 'update comment failed. ID: %s .' % timestamp_id
+        status = 'update TimeStamp failed. ID: %s .' % timestamp_id
     db.session.close()
     return jsonify({'result': status})
 
@@ -309,6 +309,7 @@ def getAllJobs():
             for timestamp in TimeStamp.query.filter_by(job_id=job.id).all():
                 timestamp_entry = {
                     "id": timestamp.id,
+                    "job_id": timestamp.job_id,
                     "description": timestamp.description,
                     "deadline": timestamp.deadline,
                     "status": timestamp.status
@@ -317,6 +318,7 @@ def getAllJobs():
             for comment in Job_Comment.query.filter_by(job_id=job.id).all():
                 comment_entry = {
                     "id": comment.id,
+                    "job_id": comment.job_id,
                     "comment": comment.comment
                 }
                 job_entry["comments"].append(comment_entry)
@@ -364,6 +366,7 @@ def getTimeStamps():
         for timestamp in TimeStamp.query.filter_by(job_id=job_id).all():
             timestamp_entry = {
                 "id": timestamp.id,
+                "job_id": timestamp.job_id,
                 "description": timestamp.description,
                 "deadline": timestamp.deadline,
                 "status": timestamp.status
@@ -387,6 +390,7 @@ def getTimeStamp():
         for timestamp in TimeStamp.query.filter_by(id=event_id).all():
             timestamp_entry = {
                 "id": timestamp.id,
+                "job_id": timestamp.job_id,
                 "description": timestamp.description,
                 "deadline": timestamp.deadline,
                 "status": timestamp.status
@@ -416,6 +420,7 @@ def getUndoTimeStamp():
                     continue
                 timestamp_entry = {
                     "id": timestamp.id,
+                    "job_id": timestamp.job_id,
                     "description": timestamp.description,
                     "deadline": timestamp.deadline,
                     "status": timestamp.status
