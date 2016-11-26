@@ -477,7 +477,9 @@ def getAllEvents():
                     "deadline": timestamp.deadline.strftime('%Y-%m-%d'),
                     "status": timestamp.status
                 }
-                res["timeStamp_list"][timestamp_entry["deadline"]] = timestamp_entry
+                if timestamp_entry["deadline"] not in res["timeStamp_list"]:
+                    res["timeStamp_list"][timestamp_entry["deadline"]] = []
+                res["timeStamp_list"][timestamp_entry["deadline"]].append(timestamp_entry)
                 dates.append(timestamp_entry["deadline"])
         res["date_list"] = list(set(dates))
         status = 'success'
