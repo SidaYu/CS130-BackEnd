@@ -425,6 +425,7 @@ def getTimeStamp():
         "timeStamps": res
     })
 
+
 @app.route('/api/getUndoTimeStamp', methods=['GET'])
 def getUndoTimeStamp():
     user_email = request.args.get('user_email').encode('utf-8')
@@ -454,6 +455,40 @@ def getUndoTimeStamp():
         "status": status,
         "res": res
     })
+
+
+@app.route('/api/getAllEvents', methods=['GET'])
+def getAllEvents():
+    user_email = request.args.get('user_email').encode('utf-8')
+    res = {"user_email": user_email,
+           "timeStamp_list": {},
+           "date_list": []}
+    try:
+        jobIDs = []
+        dates = []
+        for job in Job.query.filter_by(user_email=user_email).all():
+            jobIDs.append(job.id)
+        for job_id in jobIDs:
+            for timestamp in TimeStamp.query.filter_by(job_id=job_id).all():
+                timestamp_entry = {
+                    "id": timestamp.id,
+                    "job_id": timestamp.job_id,
+                    "description": timestamp.description,
+                    "deadline": timestamp.deadline.strftime('%Y-%d-%y'),
+                    "status": timestamp.status
+                }
+                res["timeStamp_list"][timestamp_entry.deadline] = timestamp_entry
+                dates.append(timestamp_entry.deadline)
+        res["date_list"] = list(set(dates))
+        status = 'success'
+    except:
+        status = 'query event failed'
+    db.session.close()
+    return jsonify({
+        "status": status,
+        "res": res
+    })
+
 
 @app.after_request
 def add_header(response):
