@@ -6,7 +6,7 @@ Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
 
-import os
+import os, sys
 import bcrypt
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_restful import Resource, Api
@@ -18,9 +18,9 @@ api = Api(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 
 db = SQLAlchemy(app)
 
@@ -254,7 +254,7 @@ def addTimeStamp():
         db.session.commit()
         status = 'success'
     except:
-        status = 'add job failed'
+        status = 'add event failed'
     db.session.close()
     return jsonify({'result': status})
 
@@ -262,7 +262,7 @@ def addTimeStamp():
 @app.route('/api/deleteTimeStamp', methods=['POST'])
 def deleteTimeStamp():
     json_data = request.json
-    timestamp_id = json_data['timestamp_id']
+    timestamp_id = json_data['event_id']
     try:
         TimeStamp.query.filter_by(id=timestamp_id).delete()
         db.session.commit()
@@ -276,13 +276,13 @@ def deleteTimeStamp():
 @app.route('/api/updateTimeStamp', methods=['POST'])
 def updateTimeStamp():
     json_data = request.json
-    timestamp_id = json_data['timestamp_id']
+    timestamp_id = json_data['event_id']
     updateItem = {}
     for key, value in json_data.items():
-        if key != 'timestamp_id':
+        if key != 'event_id':
             updateItem[key] = value
     try:
-        Job.query.filter_by(id=timestamp_id).update(dict(updateItem))
+        TimeStamp.query.filter_by(id=timestamp_id).update(dict(updateItem))
         db.session.commit()
         status = 'update comment success. ID: %s .' % timestamp_id
     except:
@@ -368,7 +368,7 @@ def getTimeStamps():
                 "deadline": timestamp.deadline,
                 "status": timestamp.status
             }
-        res["timeStamp_list"].append(timestamp_entry)
+            res["timeStamp_list"].append(timestamp_entry)
         status = 'success'
     except:
         status = 'query job failed'
@@ -376,6 +376,58 @@ def getTimeStamps():
     return jsonify({
         "status": status,
         "timeStamps": res
+    })
+
+@app.route('/api/getTimeStamp', methods=['GET'])
+def getTimeStamp():
+    event_id = request.args.get('event_id').encode('utf-8')
+    res = {"event_id": event_id,
+           "info": {}}
+    try:
+        for timestamp in TimeStamp.query.filter_by(id=event_id).all():
+            timestamp_entry = {
+                "id": timestamp.id,
+                "description": timestamp.description,
+                "deadline": timestamp.deadline,
+                "status": timestamp.status
+            }
+            res["info"] = timestamp_entry
+        status = 'success'
+    except:
+        status = 'query job failed'
+    db.session.close()
+    return jsonify({
+        "status": status,
+        "timeStamps": res
+    })
+
+@app.route('/api/getUndoTimeStamp', methods=['GET'])
+def getUndoTimeStamp():
+    user_email = request.args.get('user_email').encode('utf-8')
+    res = {"user_email": user_email,
+           "timeStamp_list": []}
+    try:
+        jobIDs = []
+        for job in Job.query.filter_by(user_email=user_email).all():
+            jobIDs.append(job.id)
+        for job_id in jobIDs:
+            for timestamp in TimeStamp.query.filter_by(job_id=job_id).all():
+                if timestamp.status:
+                    continue
+                timestamp_entry = {
+                    "id": timestamp.id,
+                    "description": timestamp.description,
+                    "deadline": timestamp.deadline,
+                    "status": timestamp.status
+                }
+                res["timeStamp_list"].append(timestamp_entry)
+        status = 'success'
+    except:
+        status = 'query event failed'
+    db.session.close()
+    return jsonify({
+        "status": status,
+        "res": res
     })
 
 @app.after_request
