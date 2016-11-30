@@ -383,7 +383,7 @@ def getTimeStamps():
     res = {"job_id": job_id,
            "timeStamp_list": []}
     try:
-        for timestamp in TimeStamp.query.filter_by(job_id=job_id).all():
+        for timestamp in TimeStamp.query.filter_by(job_id=job_id).order_by(TimeStamp.deadline).all():
             timestamp_entry = {
                 "id": timestamp.id,
                 "job_id": timestamp.job_id,
@@ -436,7 +436,7 @@ def getUndoTimeStamp():
         for job in Job.query.filter_by(user_email=user_email).all():
             jobIDs.append(job.id)
         for job_id in jobIDs:
-            for timestamp in TimeStamp.query.filter_by(job_id=job_id).all():
+            for timestamp in TimeStamp.query.filter_by(job_id=job_id).order_by(TimeStamp.deadline).all():
                 if timestamp.status:
                     continue
                 timestamp_entry = {
