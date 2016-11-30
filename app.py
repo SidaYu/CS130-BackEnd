@@ -435,18 +435,17 @@ def getUndoTimeStamp():
         jobIDs = []
         for job in Job.query.filter_by(user_email=user_email).all():
             jobIDs.append(job.id)
-        for job_id in jobIDs:
-            for timestamp in TimeStamp.query.filter_by(job_id=job_id).order_by(TimeStamp.deadline).all():
-                if timestamp.status:
-                    continue
-                timestamp_entry = {
-                    "id": timestamp.id,
-                    "job_id": timestamp.job_id,
-                    "description": timestamp.description,
-                    "deadline": timestamp.deadline,
-                    "status": timestamp.status
-                }
-                res["timeStamp_list"].append(timestamp_entry)
+        for timestamp in TimeStamp.query.order_by(TimeStamp.deadline).all():
+            if timestamp.status or timestamp.job_id not in jobIDs:
+                continue
+            timestamp_entry = {
+                "id": timestamp.id,
+                "job_id": timestamp.job_id,
+                "description": timestamp.description,
+                "deadline": timestamp.deadline,
+                "status": timestamp.status
+            }
+            res["timeStamp_list"].append(timestamp_entry)
         status = 'success'
     except:
         status = 'query event failed'
