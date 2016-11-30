@@ -18,9 +18,9 @@ api = Api(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'this_should_be_configured')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://patrycja:mypassword@localhost/todoapp'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 
 db = SQLAlchemy(app)
 
@@ -383,10 +383,14 @@ def getTimeStamps():
     res = {"job_id": job_id,
            "timeStamp_list": []}
     try:
+        company_name = ""
+        for job in Job.query.filter_by(id=job_id).all():
+            company_name = job.company_name
         for timestamp in TimeStamp.query.filter_by(job_id=job_id).order_by(TimeStamp.deadline).all():
             timestamp_entry = {
                 "id": timestamp.id,
                 "job_id": timestamp.job_id,
+                "company_name": company_name,
                 "description": timestamp.description,
                 "deadline": timestamp.deadline,
                 "status": timestamp.status
@@ -408,9 +412,13 @@ def getTimeStamp():
            "info": {}}
     try:
         for timestamp in TimeStamp.query.filter_by(id=event_id).all():
+            company_name = ''
+            for job in Job.query.filter_by(id=timestamp.job_id).all():
+                company_name = job.company_name
             timestamp_entry = {
                 "id": timestamp.id,
                 "job_id": timestamp.job_id,
+                "company_name": company_name,
                 "description": timestamp.description,
                 "deadline": timestamp.deadline,
                 "status": timestamp.status
@@ -433,14 +441,17 @@ def getUndoTimeStamp():
            "timeStamp_list": []}
     try:
         jobIDs = []
+        job_company = {}
         for job in Job.query.filter_by(user_email=user_email).all():
             jobIDs.append(job.id)
+            job_company[job.id] = job.company_name
         for timestamp in TimeStamp.query.order_by(TimeStamp.deadline).all():
             if timestamp.status or timestamp.job_id not in jobIDs:
                 continue
             timestamp_entry = {
                 "id": timestamp.id,
                 "job_id": timestamp.job_id,
+                "company_name" : job_company[timestamp.job_id],
                 "description": timestamp.description,
                 "deadline": timestamp.deadline,
                 "status": timestamp.status
